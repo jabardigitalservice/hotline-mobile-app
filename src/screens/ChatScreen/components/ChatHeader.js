@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useMemo } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import * as Sentry from '@sentry/react-native';
+// import * as Sentry from '@sentry/react-native';
 import PropTypes from 'prop-types';
 import { View, Share, ActivityIndicator, Dimensions, Keyboard, Platform } from 'react-native';
 import { getCustomerDetails } from 'helpers';
@@ -201,7 +201,7 @@ const ChatHeader = ({
       });
       AnalyticsHelper.track(CONVERSATION_EVENTS.CONVERSATION_SHARE);
     } catch (error) {
-      Sentry.captureException(error);
+      // Sentry.captureException(error);
     }
   };
 

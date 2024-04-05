@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { View, ScrollView, AppState, Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
+// import * as Sentry from '@sentry/react-native';
 
 import { getInboxIconByType } from 'helpers/inboxHelpers';
 import ActionCable from 'helpers/ActionCable';
@@ -74,7 +74,7 @@ const ConversationScreen = () => {
     dispatch(clearAllConversations());
     dispatch(inboxActions.fetchInboxes());
     initAnalytics();
-    initSentry();
+    // initSentry();
     checkAppVersion();
     initPushNotifications();
     dispatch(dashboardAppActions.index());
@@ -86,7 +86,7 @@ const ConversationScreen = () => {
     initAnalytics,
     initPushNotifications,
     checkAppVersion,
-    initSentry,
+    // initSentry,
   ]);
 
   const initPushNotifications = useCallback(async () => {
@@ -99,16 +99,16 @@ const ConversationScreen = () => {
     AnalyticsHelper.identify(user);
   }, [user]);
 
-  const initSentry = useCallback(async () => {
-    Sentry.setUser({
-      id: user.id,
-      email: user.email,
-      account_id: user.account_id,
-      name: user.name,
-      role: user.role,
-      installation_url: installationUrl,
-    });
-  }, [user, installationUrl]);
+  // const initSentry = useCallback(async () => {
+  // Sentry.setUser({
+  //   id: user.id,
+  //   email: user.email,
+  //   account_id: user.account_id,
+  //   name: user.name,
+  //   role: user.role,
+  //   installation_url: installationUrl,
+  // });
+  // }, [user, installationUrl]);
 
   const checkAppVersion = useCallback(async () => {
     dispatch(settingsActions.checkInstallationVersion({ user, installationUrl }));

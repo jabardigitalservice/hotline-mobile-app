@@ -16,14 +16,14 @@ import { LANGUAGES } from 'constants';
 import i18n from 'i18n';
 import images from 'constants/images';
 import createStyles from './SettingsScreen.style';
-import { HELP_URL } from 'constants/url.js';
-import { openURL } from 'helpers/UrlHelper';
+// import { HELP_URL } from 'constants/url.js';
+// import { openURL } from 'helpers/UrlHelper';
 import packageFile from '../../../package.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearContacts } from 'reducer/contactSlice';
 import { actions as settingsActions } from 'reducer/settingsSlice';
-import AnalyticsHelper from 'helpers/AnalyticsHelper';
-import { ACCOUNT_EVENTS } from 'constants/analyticsEvents';
+// import AnalyticsHelper from 'helpers/AnalyticsHelper';
+// import { ACCOUNT_EVENTS } from 'constants/analyticsEvents';
 import {
   logout,
   selectUser,
@@ -264,33 +264,6 @@ const SettingsScreen = () => {
               />
             }
           />
-        </View>
-        <View style={styles.separatorView}>
-          <View style={styles.separator}>
-            <Text bold sm color={colors.textDark}>
-              {i18n.t('SETTINGS.SUPPORT')}
-            </Text>
-          </View>
-          <View style={styles.accordionItemWrapper}>
-            {settings.supportSection.map((item, index) => (
-              <AccordionItem
-                key={item.title}
-                leftIcon={item.leftIcon}
-                title={item.title}
-                rightIcon={item.rightIcon}
-                routeName={item.routeName}
-                onPress={() => {
-                  if (item.routeName === 'ReadDocs') {
-                    openURL({ URL: HELP_URL });
-                  }
-                  if (item.routeName === 'ChatWithUs') {
-                    AnalyticsHelper.track(ACCOUNT_EVENTS.OPEN_SUPPORT);
-                    toggleWidget(true);
-                  }
-                }}
-              />
-            ))}
-          </View>
         </View>
         <View style={styles.separatorView}>
           <View style={styles.aboutView}>

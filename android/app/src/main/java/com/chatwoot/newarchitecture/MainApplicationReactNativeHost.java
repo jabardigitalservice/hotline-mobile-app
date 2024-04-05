@@ -1,4 +1,4 @@
-package com.chatwoot.app.newarchitecture;
+package id.digitalservice.hotline.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -19,9 +19,9 @@ import com.facebook.react.fabric.CoreComponentsRegistry;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.fabric.ReactNativeConfig;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.chatwoot.app.BuildConfig;
-import com.chatwoot.app.newarchitecture.components.MainComponentsRegistry;
-import com.chatwoot.app.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import id.digitalservice.hotline.BuildConfig;
+import id.digitalservice.hotline.newarchitecture.components.MainComponentsRegistry;
+import id.digitalservice.hotline.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

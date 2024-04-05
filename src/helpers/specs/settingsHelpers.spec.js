@@ -3,21 +3,21 @@ import { extractDomain, checkValidUrl } from '../settingsHelper';
 describe('SettingsHelper', () => {
   describe('extractDomain', () => {
     it('should return the domain from a https url', () => {
-      const url = 'https://www.app.chatwoot.com';
+      const url = 'https://www.cs.digitalservice.id';
       const domain = extractDomain({ url });
-      expect(domain).toEqual('app.chatwoot.com');
+      expect(domain).toEqual('cs.digitalservice.id');
     });
 
     it('should return the domain', () => {
-      const url = 'app.chatwoot.com';
+      const url = 'cs.digitalservice.id';
       const domain = extractDomain({ url });
-      expect(domain).toEqual('app.chatwoot.com');
+      expect(domain).toEqual('cs.digitalservice.id');
     });
 
     it('should return the domain from subdomain 1', () => {
-      const url = 'https://app.chatwoot.com';
+      const url = 'https://cs.digitalservice.id';
       const domain = extractDomain({ url });
-      expect(domain).toEqual('app.chatwoot.com');
+      expect(domain).toEqual('cs.digitalservice.id');
     });
 
     it('should return the domain from subdomain 2', () => {
@@ -59,13 +59,13 @@ describe('SettingsHelper', () => {
     });
 
     it('should return true for valid url 4', () => {
-      const url = 'ht://app.chatwoot.com';
+      const url = 'ht://cs.digitalservice.id';
       const domain = checkValidUrl({ url });
       expect(domain).toEqual(true);
     });
 
     it('should return false for invalid url 1', () => {
-      const url = 'app.chatwoot.com';
+      const url = 'cs.digitalservice.id';
       const domain = checkValidUrl({ url });
       expect(domain).toEqual(false);
     });

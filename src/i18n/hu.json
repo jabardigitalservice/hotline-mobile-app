@@ -14,7 +14,7 @@
   },
   "CONFIGURE_URL": {
     "ENTER_URL": "Installációs URL",
-    "DESCRIPTION": "If you are using a self-hosted Chatwoot installation, input your server URL. Otherwise, use cs.digitalservice.id.",
+    "DESCRIPTION": "Input your server URL. Otherwise, use cs.digitalservice.id.",
     "URL_ERROR": "Kérjük helyes URL-t adj meg",
     "URL_REQUIRED": "URL is required",
     "CONNECT": "Kapcsolódás",

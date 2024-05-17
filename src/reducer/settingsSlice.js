@@ -62,14 +62,14 @@ export const actions = {
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState: settingAdapter.getInitialState({
-    baseUrl: 'app.chatwoot.com',
-    installationUrl: 'https://app.chatwoot.com/',
+    baseUrl: 'cs.digitalservice.id',
+    installationUrl: 'https://cs.digitalservice.id/',
     isLocaleSet: false,
     isSettingUrl: false,
     isUpdating: false,
     localeValue: 'en',
     notification: {},
-    webSocketUrl: 'wss://app.chatwoot.com/cable',
+    webSocketUrl: 'wss://cs.digitalservice.id/cable',
   }),
   reducers: {
     resetSettings: state => {

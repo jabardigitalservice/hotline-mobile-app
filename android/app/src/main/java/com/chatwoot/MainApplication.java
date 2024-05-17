@@ -1,4 +1,4 @@
-package com.chatwoot.app;
+package id.digitalservice.hotline;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

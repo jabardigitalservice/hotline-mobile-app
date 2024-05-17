@@ -1,4 +1,4 @@
-package com.chatwoot.app;
+package id.digitalservice.hotline;
 
 import android.os.Bundle;
 
@@ -16,7 +16,7 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected String getMainComponentName() {
-    return "Chatwoot";
+    return "Hotline Jabar";
   }
 
   @Override

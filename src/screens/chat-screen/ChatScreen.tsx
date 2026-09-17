@@ -18,6 +18,7 @@ import {
   selectConversationError,
 } from '@/store/conversation/conversationSelectors';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { selectCurrentUserAccountId } from '@/store/auth/authSelectors';
 
 import { notificationActions } from '@/store/notification/notificationAction';
 import { MarkAsReadPayload } from '@/store/notification/notificationTypes';
@@ -32,8 +33,8 @@ import { ActivityIndicator, Pressable } from 'react-native';
 import i18n from '@/i18n';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { MacrosList } from './components/macros/MacrosList';
+import { WhatsAppTemplatesList } from './components/whatsapp-templates';
 import { macroActions } from '@/store/macro/macroActions';
-import { LightBoxProvider } from '@alantoa/lightbox';
 
 export const ChatWindow = (props: ChatScreenProps) => {
   return (
@@ -41,6 +42,7 @@ export const ChatWindow = (props: ChatScreenProps) => {
       <MessagesListContainer />
       <ReplyBoxContainer />
       <MacrosList conversationId={props.route.params.conversationId} />
+      <WhatsAppTemplatesList conversationId={props.route.params.conversationId} />
     </Animated.View>
   );
 };
@@ -99,22 +101,25 @@ const ChatScreen = (props: ChatScreenProps) => {
   const conversationFetching = useAppSelector(state => selectConversationFetching(state));
   const conversationError = useAppSelector(state => selectConversationError(state));
   const conversation = useAppSelector(state => selectConversationById(state, conversationId));
+  const accountId = useAppSelector(selectCurrentUserAccountId);
 
   const fetchConversation = () => {
     dispatch(conversationActions.fetchConversation(conversationId));
   };
 
+  // Refetch when the conversation or account changes, since a push can reuse this
+  // screen with new params instead of remounting.
   useEffect(() => {
     if (!conversation) {
       fetchConversation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [conversationId, accountId]);
 
   useEffect(() => {
     dispatch(macroActions.fetchMacros());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [accountId]);
 
   useEffect(() => {
     if (primaryActorId && primaryActorType) {
@@ -126,7 +131,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [primaryActorId, primaryActorType]);
 
   const handleBackPress = () => {
     if (navigation.canGoBack()) {
@@ -137,13 +142,17 @@ const ChatScreen = (props: ChatScreenProps) => {
   };
 
   if (conversation) {
+    const { messageId } = props.route.params;
     return (
       <SafeAreaView edges={['top']} style={tailwind.style('flex-1 bg-white')}>
-        <LightBoxProvider>
-          <ChatWindowProvider conversationId={conversationId}>
-            <ChatScreenWrapper {...props} />
-          </ChatWindowProvider>
-        </LightBoxProvider>
+        {/* Remount the chat subtree when the conversation or account changes so its
+            account-scoped data (agents, teams, participants, canned responses) refetches. */}
+        <ChatWindowProvider
+          key={`${accountId}-${conversationId}`}
+          conversationId={conversationId}
+          messageId={messageId}>
+          <ChatScreenWrapper {...props} />
+        </ChatWindowProvider>
         <ActionBottomSheet />
       </SafeAreaView>
     );

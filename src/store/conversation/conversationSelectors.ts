@@ -40,6 +40,11 @@ export const selectIsAllMessagesFetched = createSelector(
   state => state.isAllMessagesFetched,
 );
 
+export const selectIsAllNewerMessagesFetched = createSelector(
+  selectConversationsState,
+  state => state.isAllNewerMessagesFetched,
+);
+
 export const selectIsLoadingMessages = createSelector(
   selectConversationsState,
   state => state.isLoadingMessages,
@@ -81,11 +86,15 @@ export const getFilteredConversations = createDraftSafeSelector(
       sortType = 'latest';
     }
 
-    const sortedConversations = conversations.sort(comparator[sortType as keyof SortComparator]);
+    // Ids can outlive their record, so entries without one are dropped before
+    // sorting. The copy keeps the sort off the memoized input array.
+    const sortedConversations = [...conversations]
+      .filter(Boolean)
+      .sort(comparator[sortType as keyof SortComparator]);
 
     if (assigneeType === 'me') {
       return sortedConversations.filter(conversation => {
-        const { assignee } = conversation.meta;
+        const assignee = conversation.meta?.assignee;
 
         const shouldFilter = shouldApplyFilters(conversation, filters);
         const isAssignedToMe = assignee && assignee.id === userId;
@@ -95,7 +104,7 @@ export const getFilteredConversations = createDraftSafeSelector(
     }
     if (assigneeType === 'unassigned') {
       return sortedConversations.filter(conversation => {
-        const isUnAssigned = !conversation.meta.assignee;
+        const isUnAssigned = !conversation.meta?.assignee;
         const shouldFilter = shouldApplyFilters(conversation, filters);
         return isUnAssigned && shouldFilter;
       });

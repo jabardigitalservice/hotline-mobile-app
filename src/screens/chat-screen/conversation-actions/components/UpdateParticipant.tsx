@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { useRefsContext } from '@/context';
 import { tailwind } from '@/theme';
@@ -9,11 +8,11 @@ import { Agent } from '@/types';
 import { Avatar, Icon, SearchBar } from '@/components-next';
 import { TickIcon } from '@/svg-icons';
 
-import { assignableAgentActions } from '@/store/assignable-agent/assignableAgentActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { selectAssignableParticipantsByInboxId } from '@/store/assignable-agent/assignableAgentSelectors';
 import { selectSelectedConversation } from '@/store/conversation/conversationSelectedSlice';
 import { isAssignableAgentFetching } from '@/store/assignable-agent/assignableAgentSelectors';
+import { isConversationParticipantsFetching } from '@/store/conversation-participant/conversationParticipantSelectors';
 import { showToast } from '@/utils/toastUtils';
 import i18n from '@/i18n';
 import { CONVERSATION_EVENTS } from '@/constants/analyticsEvents';
@@ -56,24 +55,33 @@ const ParticipantStack = ({
   activeConversationParticipants,
 }: {
   allAgents: Agent[];
-  activeConversationParticipants: Agent[];
+  activeConversationParticipants?: Agent[];
 }) => {
   const isFetching = useAppSelector(isAssignableAgentFetching);
+  const isFetchingParticipants = useAppSelector(isConversationParticipantsFetching);
 
   const dispatch = useAppDispatch();
 
   const selectedConversation = useAppSelector(selectSelectedConversation);
 
+  // An update replaces the whole participant set, so building one from an
+  // assumed empty list would drop everyone already on the conversation.
+  const hasLoadedParticipants = activeConversationParticipants !== undefined;
+
   const updatedAgents = allAgents.map(agent => {
     return {
       ...agent,
-      isParticipant: activeConversationParticipants.some(
+      isParticipant: (activeConversationParticipants ?? []).some(
         participant => participant.id === agent.id,
       ),
     };
   });
 
   const handleAssigneePress = async (item: Agent & { isParticipant: boolean }) => {
+    if (!activeConversationParticipants) {
+      return;
+    }
+
     let updateAgentList = [...activeConversationParticipants];
     if (item.isParticipant) {
       updateAgentList = updateAgentList.filter(agent => agent.id !== item.id);
@@ -82,23 +90,34 @@ const ParticipantStack = ({
     }
     const userIds = updateAgentList.map(agent => agent.id);
     if (selectedConversation) {
-      await dispatch(
-        conversationParticipantActions.update({
-          conversationId: selectedConversation?.id,
-          userIds,
-        }),
-      );
-      AnalyticsHelper.track(CONVERSATION_EVENTS.PARTICIPANT_CHANGED);
-      showToast({
-        message: i18n.t('CONVERSATION.PARTICIPANT_CHANGE'),
-      });
+      try {
+        await dispatch(
+          conversationParticipantActions.update({
+            conversationId: selectedConversation?.id,
+            userIds,
+          }),
+        ).unwrap();
+        AnalyticsHelper.track(CONVERSATION_EVENTS.PARTICIPANT_CHANGED);
+        showToast({
+          message: i18n.t('CONVERSATION.PARTICIPANT_CHANGE'),
+        });
+      } catch {
+        showToast({ message: i18n.t('ERRORS.COMMON_ERROR') });
+      }
     }
   };
 
   return (
-    <BottomSheetScrollView showsVerticalScrollIndicator={false} style={tailwind.style('my-1 pl-3')}>
-      {isFetching ? (
+    <ScrollView showsVerticalScrollIndicator={false} style={tailwind.style('my-1 pl-3')}>
+      {(isFetching && allAgents.length === 0) || isFetchingParticipants ? (
         <ActivityIndicator />
+      ) : !hasLoadedParticipants ? (
+        <Animated.Text
+          style={tailwind.style(
+            'text-base text-gray-900 font-inter-420-20 leading-[21px] py-3 pr-3',
+          )}>
+          {i18n.t('ERRORS.COMMON_ERROR')}
+        </Animated.Text>
       ) : (
         updatedAgents.map((value, index) => {
           return (
@@ -113,17 +132,16 @@ const ParticipantStack = ({
           );
         })
       )}
-    </BottomSheetScrollView>
+    </ScrollView>
   );
 };
 
 type UpdateParticipantProps = {
-  activeConversationParticipants: Agent[];
+  activeConversationParticipants?: Agent[];
 };
 
 export const UpdateParticipant = (props: UpdateParticipantProps) => {
   const { activeConversationParticipants } = props;
-  const dispatch = useAppDispatch();
   const { updateParticipantSheetRef } = useRefsContext();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -131,22 +149,12 @@ export const UpdateParticipant = (props: UpdateParticipantProps) => {
 
   const inboxId = selectedConversation?.inboxId;
 
-  const inboxIds = inboxId ? [inboxId] : [];
-
   const selectAgents = useAppSelector(selectAssignableParticipantsByInboxId);
   const allAgents = inboxId ? selectAgents(inboxId, searchTerm) : [];
 
-  const handleFocus = () => {
-    updateParticipantSheetRef.current?.expand();
-  };
   const handleBlur = () => {
-    updateParticipantSheetRef.current?.dismiss({ overshootClamping: true });
+    updateParticipantSheetRef.current?.dismiss();
   };
-
-  useEffect(() => {
-    dispatch(assignableAgentActions.fetchAgents({ inboxIds }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleChangeText = (text: string) => {
     setSearchTerm(text);
@@ -155,8 +163,6 @@ export const UpdateParticipant = (props: UpdateParticipantProps) => {
   return (
     <React.Fragment>
       <SearchBar
-        isInsideBottomSheet
-        onFocus={handleFocus}
         onBlur={handleBlur}
         onChangeText={handleChangeText}
         placeholder={i18n.t('CONVERSATION.ASSIGNEE.AGENTS.SEARCH_AGENT')}

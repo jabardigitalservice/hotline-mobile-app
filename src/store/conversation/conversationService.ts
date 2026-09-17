@@ -29,6 +29,9 @@ import type {
   MarkMessageReadOrUnreadResponse,
   ToggleConversationStatusAPIResponse,
   TogglePriorityPayload,
+  TranslateMessagePayload,
+  TranslateMessageAPIResponse,
+  RetryMessagePayload,
 } from './conversationTypes';
 
 import {
@@ -75,14 +78,20 @@ export class ConversationService {
   }
 
   static async fetchPreviousMessages(payload: MessagesPayload): Promise<MessagesResponse> {
-    const { conversationId, beforeId } = payload;
+    const { conversationId, beforeId, afterId } = payload;
+
+    const params: Record<string, number> = {};
+    if (beforeId) {
+      params.before = beforeId;
+    }
+    if (afterId) {
+      params.after = afterId;
+    }
 
     const response = await apiService.get<MessagesAPIResponse>(
       `conversations/${conversationId}/messages`,
       {
-        params: {
-          before: beforeId,
-        },
+        params,
       },
     );
     const { meta, payload: messages } = response.data;
@@ -102,6 +111,16 @@ export class ConversationService {
       `conversations/${conversationId}/messages`,
       payload,
       config,
+    );
+    return response.data;
+  }
+
+  static async retryMessage({
+    conversationId,
+    messageId,
+  }: RetryMessagePayload): Promise<SendMessageAPIResponse> {
+    const response = await apiService.post<SendMessageAPIResponse>(
+      `conversations/${conversationId}/messages/${messageId}/retry`,
     );
     return response.data;
   }
@@ -211,5 +230,16 @@ export class ConversationService {
   static async togglePriority(payload: TogglePriorityPayload): Promise<void> {
     const { conversationId, priority } = payload;
     await apiService.post(`conversations/${conversationId}/toggle_priority`, { priority });
+  }
+
+  static async translateMessage(
+    payload: TranslateMessagePayload,
+  ): Promise<TranslateMessageAPIResponse> {
+    const { conversationId, messageId, targetLanguage } = payload;
+    const response = await apiService.post<TranslateMessageAPIResponse>(
+      `conversations/${conversationId}/messages/${messageId}/translate`,
+      { target_language: targetLanguage },
+    );
+    return response.data;
   }
 }

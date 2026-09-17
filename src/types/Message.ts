@@ -1,5 +1,6 @@
 import { Agent } from './Agent';
 import { AgentBot } from './AgentBot';
+import { CaptainAssistant } from './CaptainAssistant';
 import { UnixTimestamp } from './common';
 import { Contact } from './Contact';
 import { Conversation } from './Conversation';
@@ -33,6 +34,7 @@ export type ImageMetadata = {
   fileType: 'image' | 'video' | 'audio' | 'file' | 'ig_reel';
   accountId: number;
   extension: string | null;
+  contentType?: string | null;
   dataUrl: string;
   thumbUrl: string;
   fallbackTitle: string;
@@ -63,6 +65,7 @@ export type MessageContentAttributes = {
   imageType: string;
   contentType: ContentType;
   isUnsupported: boolean;
+  translations?: Record<string, string>;
 };
 
 export interface Message {
@@ -77,7 +80,7 @@ export interface Message {
   inboxId: number;
   messageType: MessageType;
   private: boolean;
-  sender?: Agent | User | AgentBot | Contact | null;
+  sender?: Agent | User | AgentBot | CaptainAssistant | Contact | null;
   sourceId: string | null;
   status: MessageStatus;
   lastNonActivityMessage: Message | null;
@@ -87,4 +90,6 @@ export interface Message {
   groupWithNext?: boolean | false;
   groupWithPrevious?: boolean | false;
   senderType?: string;
+  // Set when a send fails inside the app, before the message reaches the server
+  meta?: { error?: string };
 }

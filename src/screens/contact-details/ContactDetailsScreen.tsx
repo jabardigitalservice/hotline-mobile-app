@@ -23,6 +23,7 @@ import {
   ContactDetailsScreenHeader,
   ContactBasicActions,
   ContactMetaInformation,
+  ContactLabelActions,
 } from './components';
 import { AttributeList } from '@/components-next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -32,6 +33,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import { contactLabelActions } from '@/store/contact/contactLabelActions';
 import { getContactCustomAttributes } from '@/store/custom-attribute/customAttributeSlice';
 import { selectContactById } from '@/store/contact/contactSelectors';
+import { selectContactLabelsByContactId } from '@/store/contact/contactLabelSlice';
 import i18n from '@/i18n';
 
 type ContactDetailsScreenProps = NativeStackScreenProps<
@@ -70,7 +72,7 @@ const allSocialMediaProfiles: GenericListType[] = [
     title: 'Linkedin',
     subtitleType: 'dark',
     key: 'linkedin',
-    link: 'https://linkedin.com/',
+    link: 'https://linkedin.com/in/',
   },
   {
     icon: <InstagramFilledIcon />,
@@ -115,20 +117,32 @@ const processContactAttributes = (
 };
 
 const ContactDetailsScreen = (props: ContactDetailsScreenProps) => {
-  const { conversationId } = props.route.params;
+  const { conversationId, contactId: routeContactId } = props.route.params;
   const dispatch = useAppDispatch();
 
-  const conversation = useAppSelector(state => selectConversationById(state, conversationId));
+  const conversation = useAppSelector(state =>
+    conversationId ? selectConversationById(state, conversationId) : null,
+  );
 
-  const {
-    meta: {
-      sender: { email, id: contactId, name, thumbnail },
-    },
-  } = conversation || { meta: { sender: { name: '', thumbnail: '' } } };
+  const contactIdFromConversation = conversation?.meta?.sender?.id;
+  const contactId = routeContactId || contactIdFromConversation;
+
+  const emailFromConversation = conversation?.meta?.sender?.email;
+  const nameFromConversation = conversation?.meta?.sender?.name;
+  const thumbnailFromConversation = conversation?.meta?.sender?.thumbnail;
 
   const contact = useAppSelector(state => (contactId ? selectContactById(state, contactId) : null));
 
-  const { name: contactName, thumbnail: contactThumbnail, phoneNumber } = contact || {};
+  const {
+    name: contactName,
+    thumbnail: contactThumbnail,
+    phoneNumber,
+    email: contactEmail,
+  } = contact || {};
+
+  const email = emailFromConversation || contactEmail;
+  const name = nameFromConversation || contactName;
+  const thumbnail = thumbnailFromConversation || contactThumbnail;
 
   const {
     city,
@@ -157,6 +171,10 @@ const ContactDetailsScreen = (props: ContactDetailsScreenProps) => {
 
   const hasContactCustomAttributes = usedContactCustomAttributes.length > 0;
 
+  const contactLabels = useAppSelector(state =>
+    contactId ? selectContactLabelsByContactId(contactId)(state) : [],
+  );
+
   useEffect(() => {
     if (contactId) {
       dispatch(contactLabelActions.getContactLabels({ contactId }));
@@ -173,33 +191,31 @@ const ContactDetailsScreen = (props: ContactDetailsScreenProps) => {
     }));
 
   const fullLocation =
-    location || city || country !== undefined
-      ? location || `${city}${city ? ',' : ''} ${country}`
-      : null;
+    location || [city, country].filter(Boolean).join(', ') || null;
 
   const userDetails: GenericListType[] = [
     {
       icon: <LocationIcon />,
       subtitle: fullLocation || i18n.t('CONTACT_DETAILS.VALUE_UNAVAILABLE'),
-      title: 'Location',
+      title: i18n.t('CONTACT_DETAILS.LOCATION'),
       subtitleType: 'dark',
     },
     {
       icon: <CallIcon />,
       subtitle: phoneNumber || i18n.t('CONTACT_DETAILS.VALUE_UNAVAILABLE'),
-      title: 'Phone',
+      title: i18n.t('CONTACT_DETAILS.PHONE'),
       subtitleType: 'dark',
     },
     {
       icon: <EmailIcon />,
       subtitle: email || i18n.t('CONTACT_DETAILS.VALUE_UNAVAILABLE'),
-      title: 'Email',
+      title: i18n.t('CONTACT_DETAILS.EMAIL'),
       subtitleType: 'dark',
     },
     {
       icon: <CompanyIcon />,
       subtitle: companyName || i18n.t('CONTACT_DETAILS.VALUE_UNAVAILABLE'),
-      title: 'Company',
+      title: i18n.t('CONTACT_DETAILS.COMPANY'),
       subtitleType: 'dark',
     },
   ];
@@ -208,31 +224,34 @@ const ContactDetailsScreen = (props: ContactDetailsScreenProps) => {
 
   return (
     <View
-      style={tailwind.style(
-        `flex-1 bg-white pt-6 ${Platform.OS === 'android' ? 'pt-12' : 'pt-6'}`,
-      )}>
-      <ContactDetailsScreenHeader
-        name={name || contactName || ''}
-        thumbnail={thumbnail || contactThumbnail || ''}
-        bio={description || ''}
-      />
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={tailwind.style(`pb-[${TAB_BAR_HEIGHT}]`)}>
-        {email || phoneNumber ? (
-          <Animated.View style={tailwind.style('mt-[23px] px-4')}>
-            <ContactBasicActions phoneNumber={phoneNumber || ''} email={email || ''} />
-          </Animated.View>
-        ) : null}
-        <Animated.View style={tailwind.style('pt-10')}>
-          <AttributeList list={allDetails as AttributeListType[]} />
-        </Animated.View>
-        {hasContactCustomAttributes && (
+      style={tailwind.style(`flex-1 bg-white pt-6 ${Platform.OS === 'android' ? 'pt-12' : 'pt-6'}`)}>
+        <ContactDetailsScreenHeader
+          name={name || contactName || ''}
+          thumbnail={thumbnail || contactThumbnail || ''}
+          bio={description || ''}
+        />
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={tailwind.style(`pb-[${TAB_BAR_HEIGHT}]`)}>
+          {email || phoneNumber ? (
+            <Animated.View style={tailwind.style('mt-[23px] px-4')}>
+              <ContactBasicActions phoneNumber={phoneNumber || ''} email={email || ''} />
+            </Animated.View>
+          ) : null}
           <Animated.View style={tailwind.style('pt-10')}>
-            <ContactMetaInformation attributes={usedContactCustomAttributes} />
+            <AttributeList list={allDetails as AttributeListType[]} />
           </Animated.View>
-        )}
-      </Animated.ScrollView>
+          {hasContactCustomAttributes && (
+            <Animated.View style={tailwind.style('pt-10')}>
+              <ContactMetaInformation attributes={usedContactCustomAttributes} />
+            </Animated.View>
+          )}
+          {contactId ? (
+            <Animated.View style={tailwind.style('pt-10')}>
+              <ContactLabelActions labels={contactLabels} contactId={contactId} />
+            </Animated.View>
+          ) : null}
+        </Animated.ScrollView>
     </View>
   );
 };
